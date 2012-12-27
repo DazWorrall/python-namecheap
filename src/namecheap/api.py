@@ -390,7 +390,18 @@ class NCUser(NCAPI):
         pass
 
     def get_balances(self):
-        pass
+        doc = self._call('users.getBalances')
+
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('UserGetBalancesResult'))[0]
+        return {
+            'currency': result.attrib['Currency'],
+            'available': Decimal(result.attrib['AvailableBalance']),
+            'account': Decimal(result.attrib['AccountBalance']),
+            'earned': Decimal(result.attrib['EarnedAmount']),
+            'withdrawable': Decimal(result.attrib['WithdrawableAmount']),
+            'autorenew': Decimal(result.attrib['FundsRequiredForAutoRenew']),
+        }
 
     def change_password(self, old_password, new_password):
         pass
