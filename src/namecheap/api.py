@@ -373,7 +373,66 @@ class NCSSL(NCAPI):
         pass
     def get_list(self, list_type=None, search_term=None, sort_by=None,
                  page=None, page_size=None):
-        pass
+
+        args = {}
+        if list_type:
+            args['ListType'] = list_type
+        if search_term:
+            args['SearchTerm'] = search_term
+        if page:
+            args['Page'] = page
+        if page_size:
+            args['PageSize'] = page_size
+        if sort_by:
+            args['SortBy'] = sort_by
+
+        doc = self._call('ssl.getList', args)
+
+        ret = {}
+        certs = doc['CommandResponse'] \
+            .findall(self.client._name('SSLListResult'))[0] \
+            .findall(self.client._name('SSL'))
+
+        ret['certs'] = []
+        for cert in certs:
+            purchase = cert.attrib['PurchaseDate'].split('/')
+            expires = cert.attrib['ExpireDate'].split('/')
+            activation_expires = cert.attrib['ActivationExpireDate']
+            purchase = datetime.date(int(purchase[2]), int(purchase[0]),
+                                    int(purchase[1]))
+            expires = datetime.date(int(expires[2]), int(expires[0]),
+                                    int(expires[1]))
+            if activation_expires:
+                activation_expires = activation_expires.split('/')
+                activation_expires = datetime.date(
+                    int(activation_expires[2]), 
+                    int(activation_expires[0]),
+                    int(activation_expires[1]),
+                )
+
+            ret['certs'].append({
+                'id': int(cert.attrib['CertificateID']),
+                'hostname': cert.attrib['HostName'],
+                'type': cert.attrib['SSLType'],
+                'purchased': purchase,
+                'expires': expires,
+                'activation_expire': activation_expires or None,
+                'expired': self._bool(cert.attrib['IsExpiredYN']),
+                'status': cert.attrib['Status'],
+            })
+
+        paging = doc['CommandResponse'] \
+            .findall(self.client._name('Paging'))[0]
+        ret['paging'] = {
+            'total': int(paging.findall \
+                          (self.client._name('TotalItems'))[0].text),
+            'current': int(paging.findall \
+                           (self.client._name('CurrentPage'))[0].text),
+            'page_size': int(paging.findall \
+                        (self.client._name('PageSize'))[0].text),
+        }
+
+        return ret
 
     def resend_approver_email(self, cretificate_id):
         pass
