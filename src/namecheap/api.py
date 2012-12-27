@@ -378,15 +378,9 @@ class NCSSL(NCAPI):
         result = doc['CommandResponse'] \
             .findall(self.client._name('GetApproverEmailListResult'))[0]
         return {
-            'domain': set(
-                [e.text for e in result.findall(self.client._name('Domainemails'))[0]]
-            ),
-            'generic': set(
-                [e.text for e in result.findall(self.client._name('Genericemails'))[0]]
-            ),
-            'manual': set(
-                [e.text for e in result.findall(self.client._name('Manualemails'))[0]]
-            ),
+            'domain': [e.text for e in result.findall(self.client._name('Domainemails'))[0]],
+            'generic': [e.text for e in result.findall(self.client._name('Genericemails'))[0]],
+            'manual': [e.text for e in result.findall(self.client._name('Manualemails'))[0]],
         }
 
     def get_list(self, list_type=None, search_term=None, sort_by=None,
