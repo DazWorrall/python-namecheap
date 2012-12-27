@@ -370,7 +370,25 @@ class NCSSL(NCAPI):
         pass
 
     def get_approver_email_list(self, domain, certificate_type):
-        pass
+        doc = self._call(
+            'ssl.getApproverEmailList', 
+            {'domainname': domain, 'CertificateType': certificate_type},
+        )
+
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('GetApproverEmailListResult'))[0]
+        return {
+            'domain': set(
+                [e.text for e in result.findall(self.client._name('Domainemails'))[0]]
+            ),
+            'generic': set(
+                [e.text for e in result.findall(self.client._name('Genericemails'))[0]]
+            ),
+            'manual': set(
+                [e.text for e in result.findall(self.client._name('Manualemails'))[0]]
+            ),
+        }
+
     def get_list(self, list_type=None, search_term=None, sort_by=None,
                  page=None, page_size=None):
 
