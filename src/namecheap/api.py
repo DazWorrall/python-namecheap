@@ -356,8 +356,22 @@ class NCDomainTransfer(NCAPI):
         pass
 
 class NCSSL(NCAPI):
-    def create(self, years, quantity, ssl_type, coupon=None):
-        pass
+    def create(self, years, ssl_type, coupon=None):
+        args = {'years': years, 'type': ssl_type}
+        if coupon is not None:
+            args['PromotionCode'] = coupon
+        doc = self._call('ssl.create', args)
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('SSLCreateResult'))[0]
+
+        ret = {}
+        ret['order_id'] = result.attrib['OrderId']
+        ret['transation_id'] = result.attrib['TransactionId']
+        ret['charged_amt'] = Decimal(result.attrib['ChargedAmount'])
+        cert = result.findall(self.client._name('SSLCertificate'))[0]
+        ret['cert_id'] = int(cert.attrib['CertificateID'])
+
+        return ret
 
     def activate(self, certificate_id, approver_email, csr, web_server_type,
                  contact_data):
