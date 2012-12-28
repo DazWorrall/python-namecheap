@@ -22,6 +22,7 @@
 #
 
 import urllib2
+from urllib import urlencode
 from decimal import Decimal
 from xml.etree import ElementTree
 
@@ -49,25 +50,6 @@ class NCClient(object):
         self.ssl = NCSSL(self)
         self.user = NCUser(self)
         self.address = NCUserAddress(self)
-
-    def _make_url(self, command, args):
-        flat_args = ""
-
-        for k, v in args.items():
-            flat_args += "&{0}={1}".format(k, v)
-
-        url = "{0}?ApiUser={1}&ApiKey={2}&UserName={3}&ClientIP={4}" \
-              "&Command={5}{6}".format(
-                  self.environment,
-                  self.apiuser,
-                  self.apikey,
-                  self.username,
-                  self.client_ip,
-                  command,
-                  flat_args,
-              )
-
-        return url
 
     def _name(self, tag):
         return '{' + NC_NAMESPACE + '}' + tag
@@ -125,8 +107,14 @@ class NCClient(object):
         return doc
 
     def _call(self, command, args={}):
-        url = self._make_url(command, args)
-        response = urllib2.urlopen(url)
+        args.update({
+            'Command': command,
+            'ApiUser': self.apiuser,
+            'ApiKey': self.apikey,
+            'UserName': self.username,
+            'ClientIP': self.client_ip,
+        })
+        response = urllib2.urlopen(self.environment, urlencode(args))
         doc = self._process_response(response.read())
 
         return doc
