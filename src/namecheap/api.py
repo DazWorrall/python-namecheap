@@ -375,7 +375,15 @@ class NCSSL(NCAPI):
 
     def activate(self, certificate_id, approver_email, csr, web_server_type,
                  contact_data):
-        pass
+        args = dict(contact_data)
+        args.update({
+            'certificateid': certificate_id,
+            'approveremail': approver_email,
+            'webservertype': web_server_type,
+            'csr': csr,
+        })
+        doc = self._call('ssl.activate', args)
+        return True
 
     def get_info(self, certificate_id):
         pass
