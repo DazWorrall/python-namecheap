@@ -395,7 +395,32 @@ class NCSSL(NCAPI):
         return True
 
     def get_info(self, certificate_id):
-        pass
+        doc = self._call('ssl.getInfo', {'CertificateID': certificate_id})
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('SSLGetInfoResult'))[0]
+        ret = {}
+        for k, v in [
+            ('IssuedOn', 'issued'), 
+            ('Expires', 'expires'),
+            ('ActivationExpireDate', 'activation_expire'),
+        ]:
+            val = result.attrib.get(k)
+            if val:
+                m, d, y = [int(p) for p in val.split('/')]
+                ret[v] = datetime.date(y, m, d)
+        ret.update({
+            'order_id': int(result.attrib['OrderId']),
+            'type': result.attrib['Type'],
+            'status': result.attrib['Status'],
+            'status_desc': result.attrib['StatusDescription'],
+        })
+        details = result.find(self.client._name('CertificateDetails'))
+        ret['approver'] = details.find(self.client._name('ApproverEmail')).text
+        ret['csr'] = details.find(self.client._name('CSR')).text
+        ret['hostname'] = details.find(self.client._name('CommonName')).text
+        provider = result.find(self.client._name('Provider'))
+        ret['provider'] = provider.find(self.client._name('Name')).text
+        return ret
 
     def parse_csr(self, csr, certificate_type=None):
         pass
