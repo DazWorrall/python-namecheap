@@ -357,30 +357,40 @@ class NCDomainTransfer(NCAPI):
 
 class NCSSL(NCAPI):
 
-    def create(self, years, ssl_type, coupon=None, renew_certificate_id=None):
+    def create(self, years, ssl_type, coupon=None):
         args = {'years': years, 'type': ssl_type}
         if coupon is not None:
             args['PromotionCode'] = coupon
-        if renew_certificate_id:
-            args['CertificateID'] = renew_certificate_id
-            doc = self._call('ssl.renew', args)
-        else:
-            doc = self._call('ssl.create', args)
+        doc = self._call('ssl.create', args)
         result = doc['CommandResponse'] \
             .findall(self.client._name('SSLCreateResult'))[0]
-
         ret = {}
         ret['order_id'] = result.attrib['OrderId']
         ret['transation_id'] = result.attrib['TransactionId']
         ret['charged_amt'] = Decimal(result.attrib['ChargedAmount'])
         cert = result.findall(self.client._name('SSLCertificate'))[0]
         ret['cert_id'] = int(cert.attrib['CertificateID'])
-
         return ret
 
     def renew(self, certificate_id, years, ssl_type, coupon=None):
-        return self.create(years=years, ssl_type=ssl_type, coupon=coupon, 
-                           renew_certificate_id=certificate_id)
+        args = {
+            'years': years,
+            'SSLType': ssl_type,
+            'CertificateID': certificate_id,
+        }
+        if coupon is not None:
+            args['PromotionCode'] = coupon
+        doc = self._call('ssl.create', args)
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('SSLRenewResult'))[0]
+
+        ret = {}
+        ret['order_id'] = result.attrib['OrderId']
+        ret['transation_id'] = result.attrib['TransactionId']
+        ret['charged_amt'] = Decimal(result.attrib['ChargedAmount'])
+        ret['cert_id'] = int(cert.attrib['CertificateID'])
+
+        return ret
 
     def activate(self, certificate_id, approver_email, csr, web_server_type,
                  contact_data):
