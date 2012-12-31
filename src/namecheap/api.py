@@ -356,11 +356,16 @@ class NCDomainTransfer(NCAPI):
         pass
 
 class NCSSL(NCAPI):
-    def create(self, years, ssl_type, coupon=None):
+
+    def create(self, years, ssl_type, coupon=None, renew_certificate_id=None):
         args = {'years': years, 'type': ssl_type}
         if coupon is not None:
             args['PromotionCode'] = coupon
-        doc = self._call('ssl.create', args)
+        if renew_certificate_id:
+            args['CertificateID'] = renew_certificate_id
+            doc = self._call('ssl.renew', args)
+        else:
+            doc = self._call('ssl.create', args)
         result = doc['CommandResponse'] \
             .findall(self.client._name('SSLCreateResult'))[0]
 
@@ -372,6 +377,10 @@ class NCSSL(NCAPI):
         ret['cert_id'] = int(cert.attrib['CertificateID'])
 
         return ret
+
+    def renew(self, certificate_id, years, ssl_type, coupon=None):
+        return self.create(years=years, ssl_type=ssl_type, coupon=coupon, 
+                           renew_certificate_id=certificate_id)
 
     def activate(self, certificate_id, approver_email, csr, web_server_type,
                  contact_data):
