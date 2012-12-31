@@ -473,31 +473,26 @@ class NCSSL(NCAPI):
 
         ret['certs'] = []
         for cert in certs:
-            purchase = cert.attrib['PurchaseDate'].split('/')
-            expires = cert.attrib['ExpireDate'].split('/')
-            activation_expires = cert.attrib['ActivationExpireDate']
-            purchase = datetime.date(int(purchase[2]), int(purchase[0]),
-                                    int(purchase[1]))
-            expires = datetime.date(int(expires[2]), int(expires[0]),
-                                    int(expires[1]))
-            if activation_expires:
-                activation_expires = activation_expires.split('/')
-                activation_expires = datetime.date(
-                    int(activation_expires[2]), 
-                    int(activation_expires[0]),
-                    int(activation_expires[1]),
-                )
+            dates = {}
+            for k, v in [
+                ('PurchaseDate', 'purchased'), 
+                ('ExpireDate', 'expires'),
+                ('ActivationExpireDate', 'activation_expire'),
+            ]:
+                val = cert.attrib.get(k)
+                if val:
+                    m, d, y = [int(p) for p in val.split('/')]
+                    dates[v] = datetime.date(y, m, d)
 
-            ret['certs'].append({
+            cert_doc = {
                 'id': int(cert.attrib['CertificateID']),
                 'hostname': cert.attrib['HostName'],
                 'type': cert.attrib['SSLType'],
-                'purchased': purchase,
-                'expires': expires,
-                'activation_expire': activation_expires or None,
                 'expired': self._bool(cert.attrib['IsExpiredYN']),
                 'status': cert.attrib['Status'],
-            })
+            }
+            cert_doc.update(dates)
+            ret['certs'].append(cert_doc)
 
         paging = doc['CommandResponse'] \
             .findall(self.client._name('Paging'))[0]
