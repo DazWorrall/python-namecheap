@@ -542,7 +542,24 @@ class NCUser(NCAPI):
 
     def create_add_funds_request(self, username, amount, return_url,
                                  payment_type=NC_PAYMENT_CREDITCARD):
-        pass
+        doc = self._call(
+            'users.createaddfundsrequest',
+            args = {
+                'Username': username,
+                'Amount': amount,
+                'ReturnUrl': return_url,
+                'PaymentType': payment_type,
+            }
+        )
+
+
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('Createaddfundsrequestresult'))[0]
+        return {
+            'token': result.attrib['TokenID'],
+            'return_url': result.attrib['ReturnURL'],
+            'redirect_url': result.attrib['RedirectURL'],
+        }
 
     def get_add_funds_status(self, tokenid):
         pass
