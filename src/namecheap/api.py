@@ -380,7 +380,7 @@ class NCSSL(NCAPI):
         }
         if coupon is not None:
             args['PromotionCode'] = coupon
-        doc = self._call('ssl.create', args)
+        doc = self._call('ssl.renew', args)
         result = doc['CommandResponse'] \
             .findall(self.client._name('SSLRenewResult'))[0]
 
@@ -388,7 +388,7 @@ class NCSSL(NCAPI):
         ret['order_id'] = result.attrib['OrderId']
         ret['transation_id'] = result.attrib['TransactionId']
         ret['charged_amt'] = Decimal(result.attrib['ChargedAmount'])
-        ret['cert_id'] = int(cert.attrib['CertificateID'])
+        ret['cert_id'] = int(result.attrib['CertificateID'])
 
         return ret
 
