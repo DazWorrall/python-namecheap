@@ -437,17 +437,23 @@ class NCSSL(NCAPI):
 
     def get_approver_email_list(self, domain, certificate_type):
         doc = self._call(
-            'ssl.getApproverEmailList', 
+            'ssl.getApproverEmailList',
             {'domainname': domain, 'CertificateType': certificate_type},
         )
 
         result = doc['CommandResponse'] \
             .findall(self.client._name('GetApproverEmailListResult'))[0]
-        return {
-            'domain': [e.text for e in result.findall(self.client._name('Domainemails'))[0]],
-            'generic': [e.text for e in result.findall(self.client._name('Genericemails'))[0]],
-            'manual': [e.text for e in result.findall(self.client._name('Manualemails'))[0]],
-        }
+        res = {}
+        for k, n in (
+            ('domain', 'Domainemails'), ('generic', 'Genericemails'),
+            ('manual', 'Manualemails')
+        ):
+            try:
+                res[k] = [e.text for e in result.findall(self.client._name(n))[0]]
+            except IndexError:
+                # Missing elem
+                pass
+        return res
 
     def get_list(self, list_type=None, search_term=None, sort_by=None,
                  page=None, page_size=None):
