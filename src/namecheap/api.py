@@ -392,6 +392,22 @@ class NCSSL(NCAPI):
 
         return ret
 
+    def reissue(self, certificate_id, approver_email, csr, web_server_type,
+                 contact_data):
+        args = dict(contact_data)
+        args.update({
+            'certificateid': certificate_id,
+            'approveremail': approver_email,
+            'webservertype': web_server_type,
+            'csr': csr,
+        })
+        doc = self._call('ssl.reissue', args)
+
+        result = doc['CommandResponse'] \
+            .findall(self.client._name('SSLActivateResult'))[0]
+
+        return result.attrib['ID']
+
     def activate(self, certificate_id, approver_email, csr, web_server_type,
                  contact_data):
         args = dict(contact_data)
@@ -401,7 +417,7 @@ class NCSSL(NCAPI):
             'webservertype': web_server_type,
             'csr': csr,
         })
-        doc = self._call('ssl.activate', args)
+        self._call('ssl.activate', args)
         return True
 
     def get_info(self, certificate_id):
