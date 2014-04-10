@@ -404,7 +404,7 @@ class NCSSL(NCAPI):
         doc = self._call('ssl.reissue', args)
 
         result = doc['CommandResponse'] \
-            .findall(self.client._name('SSLActivateResult'))[0]
+            .findall(self.client._name('SSLReissueResult'))[0]
 
         return result.attrib['ID']
 
