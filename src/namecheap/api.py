@@ -541,7 +541,32 @@ class NCUser(NCAPI):
         pass
 
     def get_pricing(self, product_type, product_category=None, coupon=None):
-        pass
+        args = {'ProductType': product_type}
+        if product_category is not None:
+            args['ProductCategory'] = product_category
+        if coupon is not None:
+            args['PromotionCode'] = coupon
+        doc = self._call('users.getPricing', args = args)
+
+        data = doc['CommandResponse'] \
+            .findall(self.client._name('UserGetPricingResult'))[0]
+        result = {}
+        for pt in data.findall(self.client._name('ProductType')):
+            ptname = pt.attrib['Name']
+            result[ptname] = {}
+            for c in pt.findall(self.client._name('ProductCategory')):
+                cname = c.attrib['Name']
+                result[ptname][cname] = {}
+                for p in c.findall(self.client._name('Product')):
+                    pname = p.attrib['Name']
+                    pdata = {}
+                    for pd in p:
+                        duration = int(pd.attrib['Duration'])
+                        pdata[duration] = pd.attrib.copy()
+                        for a in ['Price', 'PromotionPrice', 'RegularPrice', 'YourPrice']:
+                            pdata[duration][a] = Decimal(pdata[duration][a])
+                    result[ptname][cname][pname] = pdata
+        return result
 
     def get_balances(self):
         doc = self._call('users.getBalances')
